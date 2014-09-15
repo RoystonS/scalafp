@@ -51,4 +51,21 @@ def zipWith[A, B, C](as: List[A], bs: List[B])(f: (A, B) => C): List[C] =
 
 def addPairwise(as: List[Int], bs: List[Int]) = zipWith(as, bs)(_ + _)
 
-val x = addPairwise(List(1,2,3), List(3,4,5))
+
+// 24 - hasSubsequence
+@tailrec
+def hasSubsequence[A](search: List[A], in: List[A]): Boolean = {
+  def startsWith(search: List[A], in: List[A]): Boolean = {
+    (search, in) match {
+      case (_, Nil) => false
+      case (Nil, _) => true
+      case (s :: ss, i :: ii) => if (s == i) startsWith(ss, ii) else false
+    }
+  }
+
+  in match {
+    case Nil => false
+    case l : List if startsWith(search, l) => true
+    case (x :: xs) => hasSubsequence(search, xs)
+  }
+}
