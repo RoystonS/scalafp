@@ -1,4 +1,5 @@
 import scala.annotation.tailrec
+import scala.collection._
 
 @tailrec
 def foldLeft[A, B](l: List[A], z: B)(f: (B, A) => B): B = {
@@ -39,14 +40,15 @@ def filter[A](l: List[A], predicate: (A => Boolean)): List[A] =
 def filterViaFlatMap[A](l: List[A], predicate: (A => Boolean)): List[A] =
   flatMap(l)(x => if (predicate(x)) List(x) else Nil)
 
-def addPairwise(as: List[Int], bs: List[Int]): List[Int] =
+def zipWith[A, B, C](as: List[A], bs: List[B])(f: (A, B) => C): List[C] =
   (as, bs) match {
     case (Nil, _) => Nil
     case (_, Nil) => Nil
-    case (a::as, b::bs) => {
-      (a+b) :: addPairwise(as, bs)
+    case (a :: as, b :: bs) => {
+      f(a, b) :: zipWith(as, bs)(f)
     }
   }
 
-val x = addPairwise(List(1,2,3), List(3,4,5))
+def addPairwise(as: List[Int], bs: List[Int]) = zipWith(as, bs)(_ + _)
 
+val x = addPairwise(List(1,2,3), List(3,4,5))
