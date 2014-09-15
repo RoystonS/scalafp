@@ -1,7 +1,8 @@
+import scala.annotation.tailrec
+import scala.collection._
+
 object datastructures {
-	import scala.annotation.tailrec
-	import scala.collection._
-	
+
 	@tailrec
 	def foldLeft[A, B](l: List[A], z: B)(f: (B, A) => B): B = {
 	  l match {
@@ -52,7 +53,6 @@ object datastructures {
 	
 	def addPairwise(as: List[Int], bs: List[Int]) = zipWith(as, bs)(_ + _)
 	
-	
 	// 24 - hasSubsequence
 	@tailrec
 	def hasSubsequence[A](search: List[A], in: List[A]): Boolean = {
@@ -66,7 +66,7 @@ object datastructures {
 	
 	  in match {
 	    case Nil => false
-	    case l : List if startsWith(search, l) => true
+	    case l : List[A] if startsWith(search, l) => true
 	    case (x :: xs) => hasSubsequence(search, xs)
 	  }
 	}
