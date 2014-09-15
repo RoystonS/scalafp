@@ -2,27 +2,24 @@ sealed trait Tree[+A]
 case class Leaf[A](value: A) extends Tree[A]
 case class Branch[A](left: Tree[A], right: Tree[A]) extends Tree[A]
 
-def size[A](tree: Tree[A]): Int =
-  tree match {
-    case Leaf(_) => 1
-    case Branch(l, r) => 1 + size(l) + size(r)
-  }
+def fold[A, B](tree: Tree[A])(baseTransform: A => B)(branchTransform: (B, B) => B): B = {
+  def go(tree: Tree[A]): B =
+    tree match {
+      case Leaf(x) => baseTransform(x)
+      case Branch(l, r) => branchTransform(go(l), go(r))
+    }
 
-def maximum(tree: Tree[Int]): Int =
-  tree match {
-    case Leaf(x) => x
-    case Branch(l, r) => maximum(l) max maximum(r)
-  }
+  go(tree)
+}
 
-def depth[A](tree: Tree[A]): Int =
-  tree match {
-    case Leaf(_) => 1
-    case Branch(l, r) => depth(l) max depth(r)
-  }
+def size[A](tree: Tree[A]) =
+  fold(tree)(_ => 1)(_ + _ + 1)
+
+def maximum(tree: Tree[Int]) =
+  fold(tree)(x => x)(_ max _)
+
+def depth[A](tree: Tree[A]) =
+  fold(tree)(_ => 0)((l, r) => (l max r) + 1)
 
 def map[A, B](tree: Tree[A])(transform: (A => B)): Tree[B] =
-  tree match {
-    case Leaf(x) => Leaf(transform(x))
-    case Branch(l, r) => Branch(map(l)(transform), map(r)(transform))
-  }
-
+  fold(tree)(x => Leaf(transform(x)): Tree[B])(Branch(_, _))
