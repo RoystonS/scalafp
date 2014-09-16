@@ -21,7 +21,22 @@ object errorhandling {
       this flatMap (x => if (f(x)) Some(x) else None)
   }
 
-
   case class Some[+A](get: A) extends Option[A]
   case object None extends Option[Nothing]
+
+  def mean(xs: Seq[Double]): Option[Double] =
+    if (xs.isEmpty) None
+    else Some(xs.sum / xs.length)
+
+  def variance(xs: Seq[Double]): Option[Double] =
+    mean(xs) flatMap (m => mean(xs.map(x => math.pow(x -m, 2))))
+
+  def map2[A, B, C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] =
+    a flatMap (va => b map (vb => f(va, vb)))
+
+  def sequence[A](a: List[Option[A]]): Option[List[A]] =
+    a match {
+      case Nil => Some(Nil)
+      case (a1 :: as) => a1 flatMap (q => (sequence(as) map (q :: _)))
+    }
 }
