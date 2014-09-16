@@ -34,9 +34,11 @@ object errorhandling {
   def map2[A, B, C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] =
     a flatMap (va => b map (vb => f(va, vb)))
 
-  def sequence[A](a: List[Option[A]]): Option[List[A]] =
+  def traverse[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] =
     a match {
       case Nil => Some(Nil)
-      case (a1 :: as) => a1 flatMap (q => (sequence(as) map (q :: _)))
+      case (a1 :: as) => map2(f(a1), traverse(as)(f))(_ :: _)
     }
+
+  def sequence[A](a: List[Option[A]]): Option[List[A]] = traverse(a)(x => x)
 }
