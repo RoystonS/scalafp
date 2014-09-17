@@ -76,5 +76,17 @@ object laziness {
 
     def apply[A](as: A*): Stream[A] =
       if (as.isEmpty) empty[A] else cons(as.head, apply(as.tail: _*))
+
+    def unfold[A, State](initialState: State)(f: State => Option[(A, State)]): Stream[A] = {
+      f(initialState) match {
+        case Some((newValue, newState)) => cons(newValue, unfold(newState)(f))
+        case None => empty
+      }
+    }
+
+    def fibs(): Stream[Int] = unfold((0, 1)) { case (f0, f1) => Some((f0, (f1, f0 + f1))) }
+    def from(n: Int): Stream[Int] = unfold(n) { x => Some((x, x + 1)) }
+    def constant[A](a: A): Stream[A] = unfold(a) { x => Some(x, x) }
+    def ones() = constant(1)
   }
 }
