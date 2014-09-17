@@ -23,6 +23,42 @@ object laziness {
 
       go(this, n)
     }
+
+    def foldRight[B](initial: => B)(f: (A, => B) => B): B =
+      this match {
+        case Cons(h, t) => f(h(), t().foldRight(initial)(f))
+        case _ => initial
+      }
+
+    def exists(p: A => Boolean): Boolean =
+      this.foldRight(false)((a, x) => p(a) || x)
+
+    def forAll(p: A => Boolean): Boolean =
+      this.foldRight(true)((a, x) => p(a) && x)
+
+    def takeWhile(p: A => Boolean): Stream[A] =
+      this.foldRight(Stream.empty[A])((x, acc) => {
+        if (p(x)) Stream.cons(x, acc) else Stream.empty
+      })
+
+    def headOption: Option[A] =
+      this.foldRight(None: Option[A])((h, _) => Some(h))
+
+    def map[B](f: A => B): Stream[B] =
+      this.foldRight(Stream.empty[B])((x, acc) => {
+        Stream.cons(f(x), acc)
+      })
+
+    def append[B >: A](as: => Stream[B]) =
+      this.foldRight(as)((h, acc) => Stream.cons(h, acc))
+
+    def filter(f: A => Boolean): Stream[A] =
+      foldRight(Stream.empty[A])((x, acc) => {
+        if (f(x)) Stream.cons(x, acc) else acc
+      })
+
+    def flatMap[B](f: A => Stream[B]): Stream[B] =
+      this.foldRight(Stream.empty[B])((x, acc) => acc append f(x))
   }
 
   case object Empty extends Stream[Nothing]
@@ -41,6 +77,4 @@ object laziness {
     def apply[A](as: A*): Stream[A] =
       if (as.isEmpty) empty[A] else cons(as.head, apply(as.tail: _*))
   }
-
-  Stream.cons(1, Stream.cons(2, throw new Exception("Foo"))).drop(1).take(1).toList
 }
