@@ -45,9 +45,20 @@ object laziness {
       this.foldRight(None: Option[A])((h, _) => Some(h))
 
     def map[B](f: A => B): Stream[B] =
-      this.foldRight(Stream.empty[B])((x, acc) => {
-        Stream.cons(f(x), acc)
-      })
+      this.foldRight(Stream.empty[B])((x, acc) => Stream.cons(f(x), acc))
+
+    def mapViaUnfold[B](f: A => B): Stream[B] =
+      Stream.unfold(this) { case Cons(hd, tl) => Some(f(hd()), tl()) }
+
+    def takeViaUnfold(n: Int) = Stream.unfold((this, n)) {
+        case (Cons(hd, tl), r) if r > 0 =>  Some(hd(), (tl(), r-1))
+        case _ => None
+      }
+
+    def takeWhileViaUnfold(p: A => Boolean) = Stream.unfold((this)) {
+      case (Cons(hd, tl)) if p(hd()) =>  Some(hd(), tl())
+      case _ => None
+    }
 
     def append[B >: A](as: => Stream[B]) =
       this.foldRight(as)((h, acc) => Stream.cons(h, acc))
@@ -59,6 +70,32 @@ object laziness {
 
     def flatMap[B](f: A => Stream[B]): Stream[B] =
       this.foldRight(Stream.empty[B])((x, acc) => acc append f(x))
+
+    def zipWith[B, C](bs: Stream[B])(f: (A, B) => C): Stream[C] = {
+      def step(state: (Stream[A], Stream[B])): Option[(C, (Stream[A], Stream[B]))] = {
+        state match {
+          case (Empty, _) => None
+          case (_, Empty) => None
+          case (Cons(a, ax), Cons(b, bx)) => Some(f(a(), b()), (ax(), bx()))
+        }
+      }
+
+      Stream.unfold(this, bs)(step)
+    }
+
+    def zipAll[B](s2: Stream[B]): Stream[(Option[A],Option[B])] = {
+      def step(state: (Stream[A], Stream[B])): Option[((Option[A], Option[B]), (Stream[A], Stream[B]))] = {
+
+        state match {
+          case (Empty, Empty) => None
+          case (Empty, Cons(h, t)) => Some((None, Some(h())), (Empty, t()))
+          case (Cons(h, t), Empty) => Some((Some(h()), None), (t(), Empty))
+          case (Cons(a, ax), Cons(b, bx)) => Some((Some(a()), Some(b())), (ax(), bx()))
+        }
+      }
+
+      Stream.unfold((this, s2))(step)
+    }
   }
 
   case object Empty extends Stream[Nothing]
