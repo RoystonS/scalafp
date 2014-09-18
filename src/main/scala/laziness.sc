@@ -48,15 +48,15 @@ object laziness {
       this.foldRight(Stream.empty[B])((x, acc) => Stream.cons(f(x), acc))
 
     def mapViaUnfold[B](f: A => B): Stream[B] =
-      Stream.unfold(this) { case Cons(hd, tl) => Some(f(hd()), tl()) }
+      Stream.unfold(this) { case Cons(hd, tl) => Some(f(hd()), tl())}
 
     def takeViaUnfold(n: Int) = Stream.unfold((this, n)) {
-        case (Cons(hd, tl), r) if r > 0 =>  Some(hd(), (tl(), r-1))
-        case _ => None
-      }
+      case (Cons(hd, tl), r) if r > 0 => Some(hd(), (tl(), r - 1))
+      case _ => None
+    }
 
     def takeWhileViaUnfold(p: A => Boolean) = Stream.unfold(this) {
-      case (Cons(hd, tl)) if p(hd()) =>  Some(hd(), tl())
+      case (Cons(hd, tl)) if p(hd()) => Some(hd(), tl())
       case _ => None
     }
 
@@ -83,7 +83,7 @@ object laziness {
       Stream.unfold(this, bs)(step)
     }
 
-    def zipAll[B](s2: Stream[B]): Stream[(Option[A],Option[B])] = {
+    def zipAll[B](s2: Stream[B]): Stream[(Option[A], Option[B])] = {
       def step(state: (Stream[A], Stream[B])): Option[((Option[A], Option[B]), (Stream[A], Stream[B]))] = {
 
         state match {
@@ -96,6 +96,28 @@ object laziness {
 
       Stream.unfold((this, s2))(step)
     }
+
+    def startsWith[A](s2: Stream[A]): Boolean = {
+      zipAll(s2).takeWhile(x => !x._2.isEmpty) forAll {
+        case (h1, h2) => h1 == h2
+      }
+    }
+
+    def tails: Stream[Stream[A]] =
+      Stream.unfold(this) {
+        case Empty => None
+        case str => Some((str, str drop 1))
+      } append Stream(Stream.empty)
+
+    def scanRight[B](z: B)(f: (A,=>B) => B): Stream[B] =
+      foldRight((z, Stream(z)))((a,p) => {
+        val b2 = f(a,p._1)
+        (b2, Stream.cons(b2,p._2))
+      })._2
+
+
+    def hasSubsequence[B >: A](s2: Stream[B]): Boolean =
+      tails exists (_ startsWith s2)
   }
 
   case object Empty extends Stream[Nothing]
