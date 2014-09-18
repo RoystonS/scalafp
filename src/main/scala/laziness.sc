@@ -3,12 +3,12 @@ object laziness {
     def toList: List[A] =
       this match {
         case Empty => Nil
-        case Cons(hd, tl) => hd() :: (tl()).toList
+        case Cons(hd, tl) => hd() :: tl().toList
       }
 
     def take(n: Int): Stream[A] =
       this match {
-        case Cons(hd, tl) if (n == 1) => Stream.cons(hd(), Stream.empty)
+        case Cons(hd, tl) if n == 1 => Stream.cons(hd(), Stream.empty)
         case Cons(hd, tl) => Stream.cons(hd(), tl().take(n - 1))
         case _ => Stream.empty
       }
@@ -55,7 +55,7 @@ object laziness {
         case _ => None
       }
 
-    def takeWhileViaUnfold(p: A => Boolean) = Stream.unfold((this)) {
+    def takeWhileViaUnfold(p: A => Boolean) = Stream.unfold(this) {
       case (Cons(hd, tl)) if p(hd()) =>  Some(hd(), tl())
       case _ => None
     }
